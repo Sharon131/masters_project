@@ -61,44 +61,45 @@ module streaming_ans_beh(
                 C[i] <= 0;
             end
         end
-        else state <= next_state;
-        case (state)
-        S0: begin /* IDLE */
-           if (start == 1) begin
-            state <= S1;
-            symbols_no <= freq[2:0];
-            frequency_read <= 1;
-           end else
-            state <= S0;
+        else begin
+            case (state)
+            S0: begin /* IDLE */
+               if (start == 1) begin
+                state <= S1;
+                symbols_no <= freq[2:0];
+                frequency_read <= 1;
+               end else
+                state <= S0;
+            end
+            S1: begin /* PREINIT - read frequencies for symbols */
+               if (frequency_ready == 1) begin
+                freqs[freq_indx] <= freq;
+                freq_indx <= freq_indx + 1;
+               end else begin
+                frequency_read <= 0;
+               end
+               if (freq_indx + 1 == symbols_no) begin
+                state <= S2;
+               end else begin
+                state <= S1;
+               end
+            end
+            S2: begin /* INIT - prepare for ANS */
+               for (i=0; i<symbols_no; i=i+1) begin
+                M = M + freqs[i];
+                C[i+1] = C[i] + freqs[i];
+               end
+               state_out <= M;
+               state <= S3;
+            end
+            S3: begin /* STEP1 - count bitstream */
+            
+            end
+            S4: begin /* STEP2 - count next state */
+            
+            end
+            endcase
         end
-        S1: begin /* PREINIT - read frequencies for symbols */
-           if (frequency_ready == 1) begin
-            freqs[freq_indx] <= freq;
-            freq_indx <= freq_indx + 1;
-           end else begin
-            frequency_read <= 0;
-           end
-           if (freq_indx + 1 == symbols_no) begin
-            state <= S2;
-           end else begin
-            state <= S1;
-           end
-        end
-        S2: begin /* INIT - prepare for ANS */
-           for (i=0; i<symbols_no; i=i+1) begin
-            M = M + freqs[i];
-            C[i+1] = C[i] + freqs[i];
-           end
-           state_out <= M;
-           state <= S3;
-        end
-        S3: begin /* STEP1 - count bitstream */
-        
-        end
-        S4: begin /* STEP2 - count next state */
-        
-        end
-        endcase
     end
         
     
