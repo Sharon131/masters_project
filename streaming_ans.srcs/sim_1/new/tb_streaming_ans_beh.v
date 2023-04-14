@@ -21,16 +21,18 @@
 
 
 module tb_streaming_ans_beh;
-    reg clk, reset, start, bitstream_read, freq_ready, last_symbol;
-    reg [15:0] freq;
+    parameter STATE_WIDTH = 32;
+    
+    reg clk, reset, start;
+    reg [STATE_WIDTH-1:0] freq;
     reg [7:0] symbol;
 
-	wire state_ready, bitstream_ready, frequency_read;
-	wire [31:0] state_out;
-	wire [14:0] bitstream;
+	wire state_ready;
+	wire [STATE_WIDTH-1:0] state_out;
+	wire [STATE_WIDTH-3:0] bitstream;
+	wire [5:0] bistream_width;
 	
-	streaming_ans_beh codec(clk, reset, start, freq, symbol, bitstream_read, freq_ready, last_symbol,
-	                               state_ready, state_out, bitstream_ready, bitstream, frequency_read);
+	streaming_ans_beh #(.state_width(STATE_WIDTH)) codec(clk, reset, start, freq, symbol, state_ready, state_out, bitstream, bistream_width);
 	                               
 	always
 	   #5 clk = ~clk;
@@ -42,32 +44,20 @@ module tb_streaming_ans_beh;
             start = 0;
             freq = 0;
             symbol = 0;
-            bitstream_read = 0;
-            freq_ready = 0;
-            last_symbol = 0;
             
             #10; reset = 1;
-            #6; freq = 4; start = 1;
-      
-            #30 $finish;
-            
-            while (frequency_read == 0) begin
-            end
+            #10; freq = 4; start = 1;
             
             /* Testing string: aabc ddaa cbab */
-            freq = 5;
-            freq_ready = 1;
+            #10; freq = 5; /* a */
+            #10; freq = 3; /* b */
+            #10; freq = 2; /* c, d */
             
-            #15 freq_ready = 0;
-            while (frequency_read == 0) begin
-            end
-            
-            freq = 3;
-            freq_ready = 1;
-            
-            #15 freq_ready = 0;
-            while (frequency_read == 0) begin
-            end
+            #30; symbol = 0;
+            #20; symbol = 1;
+            #10; symbol = 2;
+            #10; symbol = 3;
+            #20;
             
             #30 $finish;
             
