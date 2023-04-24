@@ -2,3 +2,5 @@
 *.cache/
 *.hw
 *.runs/
+*.idea/
+

@@ -37,11 +37,14 @@ module streaming_ans_beh
     reg [3:0] state;
     reg [2:0] alphabet_size;
     reg [7:0] freq_indx;
-    reg [ans_state_width-2:0] freqs [7:0];
+    reg [ans_state_width-2:0] freqs [255:0];
     reg [ans_state_width-2:0] M; 
-    reg [ans_state_width-2:0] C [7:0];
+    reg [ans_state_width-2:0] C [255:0];
     reg [7:0] symbol_reg;
     reg [ans_state_width-2:0] symbol_indx;
+    
+    wire [ans_state_width-2:0] M_next;
+    
     integer i;
     
     always @(posedge clk) begin
@@ -75,7 +78,7 @@ module streaming_ans_beh
                C[freq_indx + 1] <= C[freq_indx] + freq;
                if (freq_indx + 1 == alphabet_size) begin
                 state <= S2;
-                ans_state = M + freq;
+                ans_state <= M + freq;
                end
             end
             S2: begin /* STEP1 - count next state and bitstream */
