@@ -53,11 +53,16 @@ module tb_streaming_ans_beh;
             #10; freq = 3; /* b */
             #10; freq = 2; /* c, d */
             
-            #30; symbol = 0;
-            #20; symbol = 1;
-            #10; symbol = 2;
-            #10; symbol = 3;
-            #20;
+            #20; symbol = 0; /* a, a */
+            #20; symbol = 1; /* b */
+            #10; symbol = 2; /* c */
+            #10; symbol = 3; /* d, d */
+            #20; symbol = 0; /* a, a */
+            #20; symbol = 2; /* c */
+            #10; symbol = 1; /* b */
+            #10; symbol = 0; /* a */
+            #10; symbol = 1; /* b */
+            
             
             #30 $finish;
             
