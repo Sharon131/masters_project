@@ -102,8 +102,66 @@ def decode_stream_ans(state, bitstream: list, freqs, k: int, l: int):
     return dec_text
 
 
-def prepare_for_decode(input_text: str):
-    pass
+def rans_step_no_div(symbol, state: int, freqs: Counter):
+    M = sum(freqs.values())
+    # M = 1024
+    C = count_cummulative(freqs)
+
+    return M + C[symbol] + state - freqs[symbol]
+
+
+def stream_ans_no_div(s_input: str, freqs: Counter):
+    M = sum(freqs.values())
+    # M = 1024
+    bitstream = []
+    state = M
+    range_factor = 2
+
+    for s in s_input:  # iterate over the input
+        # Output bits to the stream to bring the state in the range for the next encoding
+        while state >= range_factor * freqs[s]:
+            bitstream.append(state % 2)
+            state = state // 2
+        state = rans_step_no_div(s, state, freqs)  # The rANS encoding step
+    return state, bitstream
+
+
+def drans_step_no_div(state, freqs: Counter):
+    M = sum(freqs.values())
+    # M = 1024
+    C = count_cummulative(freqs)
+    slot = state - M
+    symbol = cummulative_inverse(C, slot)
+    prev_state = freqs[symbol] + slot - C[symbol]
+    return symbol, prev_state
+
+
+def decode_stream_ans_no_div(state, bitstream: list, freqs):
+    M = sum(freqs.values())
+    # M = 1024
+    # cumm_freqs = count_cummulative(freqs)
+
+    dec_text = ""
+    while len(bitstream) > 0:
+        symbol, state = drans_step_no_div(state, freqs)
+
+        dec_text = symbol + dec_text
+        while state < M:
+            bits = bitstream.pop()
+            state = state * 2 + bits
+
+    return dec_text
+
+
+def check_encoding_decoding(text, freqs, l, k):
+    print("------------")
+    print("l=", l, "k=", k)
+    (state, bitstream) = stream_ans(text, freqs, k, l)
+    print("state, bitstream:", state, bitstream)
+    print("bitstream length: ", len(bitstream))
+    decoded_text = decode_stream_ans(state, bitstream, freqs, k, l)
+    print("decoded text: ", decoded_text)
+    print("decoding successfull: ", decoded_text == text)
 
 
 if __name__ == '__main__':
@@ -122,26 +180,29 @@ if __name__ == '__main__':
     print(drans_step(first_step, freqs))
 
     print("Reversed cummulative symbol", cummulative_inverse(cum, 15))
-    print("k=1")
-    (state, bitstream) = stream_ans(text, freqs, 1, 1)
-    print(state, bitstream)
-    print(len(bitstream))
-    decoded_text = decode_stream_ans(state, bitstream, freqs, 1, 1)
-    print("decoding", decoded_text)
-    print("decoding successfull: ", decoded_text == text)
-    print("k=4")
-    (state, bitstream) = stream_ans(text, freqs, 4, 1)
-    print(state, bitstream)
-    print(len(bitstream))
-    decoded_text = decode_stream_ans(state, bitstream, freqs, 4, 1)
-    print("decoding", decoded_text)
-    print("decoding successfull: ", decoded_text == text)
-    print("k=8")
-    (state, bitstream) = stream_ans(text, freqs, 8, 1)
-    print(state, bitstream)
-    print(len(bitstream))
-    # decoding for k=8 fails: not enough bitstream
-    decoded_text = decode_stream_ans(state, bitstream, freqs, 8, 1)
-    print("decoding", decoded_text)
-    print("decoding successfull: ", decoded_text == text)
 
+    check_encoding_decoding(text, freqs, 1, 1)
+
+    check_encoding_decoding(text, freqs, 1, 4)
+    check_encoding_decoding(text, freqs, 1, 8)
+
+    check_encoding_decoding(text, freqs, 2, 1)
+    check_encoding_decoding(text, freqs, 4, 1)
+    check_encoding_decoding(text, freqs, 8, 1)
+    check_encoding_decoding(text, freqs, 10, 1)
+    # print("k=1, l=10")
+    # (state, bitstream) = stream_ans(text, freqs, 1, 10)
+    # print(state, bitstream)
+    # print(len(bitstream))
+    # decoded_text = decode_stream_ans(state, bitstream, freqs, 1, 10)
+    # print("decoding", decoded_text)
+    # print("decoding successfull: ", decoded_text == text)
+
+    print("------No division------")
+    (state, bitstream) = stream_ans_no_div(text, freqs)
+    print(state, bitstream)
+    print(len(bitstream))
+
+    decoded_text = decode_stream_ans_no_div(state, bitstream, freqs)
+    print("decoding", decoded_text)
+    print("decoding successfull: ", decoded_text == text)
