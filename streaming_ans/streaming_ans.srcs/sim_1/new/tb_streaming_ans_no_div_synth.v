@@ -20,7 +20,7 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 
-module tb_streaming_ans_no_div;
+module tb_streaming_ans_no_div_synth;
     parameter STATE_WIDTH = 32;
     
     reg clk, reset, start;
@@ -30,9 +30,9 @@ module tb_streaming_ans_no_div;
 	wire state_ready;
 	wire [STATE_WIDTH-1:0] state_out;
 	wire [STATE_WIDTH-3:0] bitstream;
-	wire [5:0] bistream_width;
+	wire [5:0] bistream_width; 
 	
-	streaming_ans_no_div #(.ans_state_width(STATE_WIDTH)) codec_no_div(clk, reset, start, freq, symbol, state_ready, state_out, bitstream, bistream_width);
+	streaming_ans_no_div_synth #(.ans_state_width(STATE_WIDTH)) codec_no_div(clk, reset, start, freq, symbol, state_ready, state_out, bitstream, bistream_width);
 	                               
 	always
 	   #5 clk = ~clk;

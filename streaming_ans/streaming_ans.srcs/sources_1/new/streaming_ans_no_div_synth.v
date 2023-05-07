@@ -5,7 +5,7 @@
 // 
 // Create Date: 27.03.2023 11:15:34
 // Design Name: 
-// Module Name: streaming_ans_no_div_beh
+// Module Name: streaming_ans_beh
 // Project Name: 
 // Target Devices: 
 // Tool Versions: 
@@ -20,7 +20,7 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 
-module streaming_ans_no_div
+module streaming_ans_no_div_synth
     #(  parameter ans_state_width = 32)
     (   input wire clk,
         input wire reset,
@@ -43,6 +43,8 @@ module streaming_ans_no_div
     reg [ans_state_width-2:0] symbol_indx;
      
 //    reg [ans_state_width-2:0] M_next;
+    
+    integer i;
     
     always @(posedge clk) begin
         if (!reset) begin
