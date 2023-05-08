@@ -33,13 +33,15 @@ module streaming_ans_no_div_synth
         output reg [5:0] bitstream_width
     );
     
-    parameter [2:0] S0=3'd0,S1=3'd1,S2=3'd2,S3=3'd3; /*S4=3'd4,S5=3'd5,S6=3'd6;*/
+    localparam [2:0] S0=3'd0,S1=3'd1,S2=3'd2,S3=3'd3; /*S4=3'd4,S5=3'd5,S6=3'd6;*/
+    localparam freq_max_count = 256;                  /* Max size of alphabet */
+    
     reg [3:0] state;
     reg [2:0] alphabet_size;
     reg [7:0] freq_indx;
-    reg [ans_state_width-2:0] freqs [255:0];
+    reg [ans_state_width-2:0] freqs [freq_max_count-1:0];
     reg [ans_state_width-2:0] M; 
-    reg [ans_state_width-2:0] C [255:0];
+    reg [ans_state_width-2:0] C [freq_max_count-1:0];
     reg [ans_state_width-2:0] symbol_indx;
      
 //    reg [ans_state_width-2:0] M_next;
@@ -56,9 +58,8 @@ module streaming_ans_no_div_synth
             alphabet_size <= 0;
             freq_indx <= 0;
             M <= 0;
-//            M_next <= 0;
             symbol_indx <= 0;
-            for (i=0; i<256; i=i+1) begin
+            for (i=0; i<freq_max_count; i=i+1) begin
                 freqs[i] <= 0;
                 C[i] <= 0;
             end
