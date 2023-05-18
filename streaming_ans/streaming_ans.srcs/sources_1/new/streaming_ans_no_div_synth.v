@@ -19,9 +19,10 @@
 // 
 //////////////////////////////////////////////////////////////////////////////////
 
+localparam ans_state_width = 32;
 
 module streaming_ans_no_div_synth
-    #(  parameter ans_state_width = 32)
+//    #(  parameter ans_state_width = 32)
     (   input wire clk,
         input wire reset,
         input wire start,
