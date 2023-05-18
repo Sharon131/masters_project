@@ -62,6 +62,7 @@ module tb_streaming_ans_no_div_synth;
             #10; symbol = 1; /* b */
             #10; symbol = 0; /* a */
             #10; symbol = 1; /* b */
+            start = 0;
             
             
             #30 $finish;
