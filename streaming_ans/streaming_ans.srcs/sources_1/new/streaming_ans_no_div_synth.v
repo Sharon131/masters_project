@@ -19,18 +19,15 @@
 // 
 //////////////////////////////////////////////////////////////////////////////////
 
-localparam ans_state_width = 32;
-
 module streaming_ans_no_div_synth
-//    #(  parameter ans_state_width = 32)
+    #(  localparam ans_state_width = 32)
     (   input wire clk,
         input wire reset,
         input wire start,
         input wire [ans_state_width-2:0] freq,
         input wire [7:0] symbol,
         output reg output_ready,
-        output reg [ans_state_width-1:0] ans_state,
-        output reg [ans_state_width-2:0] bitstream,
+        output reg [ans_state_width-1:0] output_state,
         output reg [4:0] bitstream_width
     );
     
@@ -40,7 +37,7 @@ module streaming_ans_no_div_synth
     reg [3:0] state;
     reg [7:0] alphabet_size;
     reg [7:0] freq_indx;
-//    reg [ans_state_width-1:0] ans_state;
+    reg [ans_state_width-1:0] ans_state;
     reg [ans_state_width-2:0] freqs [freq_max_count-1:0];
     reg [ans_state_width-2:0] M; 
     reg [ans_state_width-2:0] C [freq_max_count-1:0];
@@ -51,19 +48,10 @@ module streaming_ans_no_div_synth
     always @(posedge clk) begin
         if (!reset) begin
             output_ready <= 0;
-//            output_state <= 0;
-            ans_state <= 0;
-            bitstream <= 0;
+            output_state <= 0;
             bitstream_width <= 0;
             state <= S0;
             alphabet_size <= 0;
-//            freq_indx <= 0;
-//            M <= 0;
-//            symbol_indx <= 0;
-//            for (i=0; i<freq_max_count; i=i+1) begin
-//                freqs[i] <= 0;
-//                C[i] <= 0;
-//            end
             C[0] <= 0;
         end
         else begin
@@ -88,27 +76,26 @@ module streaming_ans_no_div_synth
                end
             end
             S2: begin /* STEP1 - count next state and bitstream */
-                bitstream <= ans_state[ans_state_width-2:0];
-                for (i=0; i<ans_state_width; i=i+1) begin
-                    if ((ans_state >> i) < 2 * freqs[symbol] && (ans_state >> i) >= freqs[symbol]) begin
-                        bitstream_width = i;
-                    end
-                end
-                ans_state <= M + C[symbol] + (ans_state >> bitstream_width) - freqs[symbol];
-                if (symbol_indx + 1 == M) begin
+                if (symbol_indx == M) begin
                     output_ready <= 1;
-//                    output_state <= M + C[symbol] + (ans_state >> bitstream_width) - freqs[symbol];
+                    bitstream_width <= 0;
+                    output_state <= ans_state; /* Final ANS state*/
                     state <= S3;
                 end else begin
+                    for (i=0; i<ans_state_width; i=i+1) begin
+                        if ((ans_state >> i) < 2 * freqs[symbol] && (ans_state >> i) >= freqs[symbol]) begin
+                            bitstream_width = i;
+                        end
+                    end
+                    output_state <= ans_state[ans_state_width-2:0]; /* Bitstream */
+                    ans_state <= M + C[symbol] + (ans_state >> bitstream_width) - freqs[symbol];
                     symbol_indx <= symbol_indx + 1;
                 end
             end
             S3: begin /* END - hold state_out and bitstream values */
                 if (!start) begin
                     output_ready <= 0;
-        //            output_state <= 0;
-                    ans_state <= 0;
-                    bitstream <= 0;
+                    output_state <= 0;
                     bitstream_width <= 0;
                     state <= S0;
                 end

@@ -29,11 +29,12 @@ module tb_streaming_ans_no_div_synth;
 
 	wire state_ready;
 	wire [STATE_WIDTH-1:0] state_out;
-	wire [STATE_WIDTH-2:0] bitstream;
+//	wire [STATE_WIDTH-2:0] bitstream;
 	wire [4:0] bistream_width; 
 	
 //	streaming_ans_no_div_synth #(.ans_state_width(STATE_WIDTH)) codec_no_div(clk, reset, start, freq, symbol, state_ready, state_out, bitstream, bistream_width);
-    streaming_ans_no_div_synth codec_no_div(clk, reset, start, freq, symbol, state_ready, state_out, bitstream, bistream_width);
+//    streaming_ans_no_div_synth codec_no_div(clk, reset, start, freq, symbol, state_ready, state_out, bitstream, bistream_width);
+    streaming_ans_no_div_synth codec_no_div(clk, reset, start, freq, symbol, state_ready, state_out, bistream_width);
  
 	always
 	   #5 clk = ~clk;
@@ -63,7 +64,7 @@ module tb_streaming_ans_no_div_synth;
             #10; symbol = 1; /* b */
             #10; symbol = 0; /* a */
             #10; symbol = 1; /* b */
-            start = 0;
+            #10; start = 0;
             
             
             #30 $finish;

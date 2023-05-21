@@ -41,6 +41,8 @@ module streaming_ans_no_div
     reg [ans_state_width-2:0] M; 
     reg [ans_state_width-2:0] C [255:0];
     reg [ans_state_width-2:0] symbol_indx;
+    
+    integer i;
      
 //    reg [ans_state_width-2:0] M_next;
     
