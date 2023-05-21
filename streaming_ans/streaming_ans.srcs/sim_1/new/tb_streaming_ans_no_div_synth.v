@@ -29,8 +29,8 @@ module tb_streaming_ans_no_div_synth;
 
 	wire state_ready;
 	wire [STATE_WIDTH-1:0] state_out;
-	wire [STATE_WIDTH-3:0] bitstream;
-	wire [5:0] bistream_width; 
+	wire [STATE_WIDTH-2:0] bitstream;
+	wire [4:0] bistream_width; 
 	
 //	streaming_ans_no_div_synth #(.ans_state_width(STATE_WIDTH)) codec_no_div(clk, reset, start, freq, symbol, state_ready, state_out, bitstream, bistream_width);
     streaming_ans_no_div_synth codec_no_div(clk, reset, start, freq, symbol, state_ready, state_out, bitstream, bistream_width);
@@ -47,7 +47,7 @@ module tb_streaming_ans_no_div_synth;
             symbol = 0;
             
             #10; reset = 1;
-            #100; freq = 4; start = 1;
+            #100; freq = 3; start = 1;
             
             /* Testing string: aabc ddaa cbab */
             #10; freq = 5; /* a */

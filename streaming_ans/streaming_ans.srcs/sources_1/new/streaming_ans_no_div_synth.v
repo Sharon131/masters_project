@@ -30,15 +30,15 @@ module streaming_ans_no_div_synth
         input wire [7:0] symbol,
         output reg output_ready,
         output reg [ans_state_width-1:0] ans_state,
-        output reg [ans_state_width-3:0] bitstream,
-        output reg [5:0] bitstream_width
+        output reg [ans_state_width-2:0] bitstream,
+        output reg [4:0] bitstream_width
     );
     
     localparam [1:0] S0=3'd0,S1=3'd1,S2=3'd2,S3=3'd3;
     localparam freq_max_count = 256;                  /* Max size of alphabet */
     
     reg [3:0] state;
-    reg [2:0] alphabet_size;
+    reg [7:0] alphabet_size;
     reg [7:0] freq_indx;
 //    reg [ans_state_width-1:0] ans_state;
     reg [ans_state_width-2:0] freqs [freq_max_count-1:0];
@@ -71,7 +71,7 @@ module streaming_ans_no_div_synth
             S0: begin /* IDLE */
                if (start) begin
                 state <= S1;
-                alphabet_size <= freq[2:0];
+                alphabet_size <= freq[7:0];
                 M <= 0;
                 freq_indx <= 0;
                end
@@ -81,15 +81,15 @@ module streaming_ans_no_div_synth
                freq_indx <= freq_indx + 1;
                M <= M + freq;
                C[freq_indx + 1] <= C[freq_indx] + freq;
-               if (freq_indx + 1 == alphabet_size) begin
+               if (freq_indx == alphabet_size) begin
                 state <= S2;
                 ans_state <= M + freq;
                 symbol_indx <= 0;
                end
             end
             S2: begin /* STEP1 - count next state and bitstream */
-                bitstream <= ans_state[ans_state_width-3:0];
-                for (i=0; i<ans_state_width-2; i=i+1) begin
+                bitstream <= ans_state[ans_state_width-2:0];
+                for (i=0; i<ans_state_width; i=i+1) begin
                     if ((ans_state >> i) < 2 * freqs[symbol] && (ans_state >> i) >= freqs[symbol]) begin
                         bitstream_width = i;
                     end
