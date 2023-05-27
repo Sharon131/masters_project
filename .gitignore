@@ -3,4 +3,5 @@
 *.hw
 *.runs/
 *.idea/
+*.csv
 
