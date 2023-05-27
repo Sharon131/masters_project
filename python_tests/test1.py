@@ -1,7 +1,8 @@
 from itertools import accumulate
 from collections import Counter
+from math import log2, ceil
 
-text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
+text_lorem = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
 text_eng = "On the other hand, we denounce with righteous indignation and dislike men who are so beguiled and demoralized by the charms of pleasure of the moment, so blinded by desire, that they cannot foresee the pain and trouble that are bound to ensue, and equal blame belongs to those who fail in their duty through weakness of will, which is the same as saying through shrinking from toil and pain. These cases are perfectly simple and easy to distinguish. In a free hour, when our power of choice is untrammelled and when nothing prevents our being able to do what we like best, every pleasure is to be welcomed and every pain avoided."
 fixed_freqs_1024 = {' ': 171, 'e': 88, 't': 64, 'a': 62, 'n': 56, 'i': 56, 'o': 55, 's': 53, 'r': 52, 'l': 32, 'd': 32, 'h': 26, 'c': 25, 'u': 19,
                     'm': 18, 'p': 17, 'f': 15, 'g': 12, '.': 11, 'b': 10, ',': 8, 'v': 7, 'x': 2, 'q': 1, 'L': 1, 'U': 1, 'D': 1, 'E': 1,
@@ -9,6 +10,15 @@ fixed_freqs_1024 = {' ': 171, 'e': 88, 't': 64, 'a': 62, 'n': 56, 'i': 56, 'o': 
 fixed_freqs_512 = {' ': 85, 'e': 44, 't': 32, 'a': 31, 'n': 28, 'i': 28, 'o': 27, 's': 26, 'r': 26, 'l': 16, 'd': 16, 'h': 13, 'c': 12, 'u': 9,
                     'm': 9, 'p': 8, 'f': 7, 'g': 6, '.': 5, 'b': 5, ',': 4, 'v': 3, 'x': 1, 'q': 1, 'L': 1, 'U': 1, 'D': 1, 'E': 1,
                    'O': 1, 'w': 1, 'k': 1, 'z': 1, 'y': 1, 'T': 1, 'I': 1}
+
+# image_peppers =
+
+
+def prepare_text_for_ans(input_text: str):
+    counter = Counter(input_text)
+
+    return counter
+
 
 def count_cummulative(freqs: Counter):
     cum = dict()
@@ -36,9 +46,9 @@ def stream_ans(s_input: str, freqs: Counter, k: int, l: int):
     M = sum(freqs.values())
     # M = 1024
     bitstream = []
-    state = l*M
     shift_factor = (2**k)
     range_factor = l * shift_factor
+    state = M * l
     bitstream_prev_len = 0
 
     for s in s_input:  # iterate over the input
@@ -53,12 +63,6 @@ def stream_ans(s_input: str, freqs: Counter, k: int, l: int):
         # print("After step, state: ", state, "bitstream len: ", len(bitstream) - bitstream_prev_len)
         bitstream_prev_len = len(bitstream)
     return state, bitstream
-
-
-def prepare_text_for_ans(input_text: str):
-    counter = Counter(input_text)
-
-    return counter
 
 
 def cummulative_inverse(cumm_freqs: dict, slot: int):
@@ -91,11 +95,11 @@ def decode_stream_ans(state, bitstream: list, freqs, k: int, l: int):
     range_factor = l
 
     dec_text = ""
-    while len(bitstream) > 0:
+    while len(dec_text) < M:
         symbol, state = drans_step(state, freqs)
 
         dec_text = symbol + dec_text
-        while state < range_factor * M:
+        while state < range_factor * M and len(bitstream) > 0:
             bits = bitstream.pop()
             state = state * shift_factor + bits
 
@@ -160,18 +164,59 @@ def check_encoding_decoding(text, freqs, l, k):
     print("state, bitstream:", state, bitstream)
     print("bitstream length: ", len(bitstream))
     decoded_text = decode_stream_ans(state, bitstream, freqs, k, l)
-    print("decoded text: ", decoded_text)
+    # print("decoded text: ", decoded_text)
     print("decoding successfull: ", decoded_text == text)
+
+
+def analise_encoding_k(to_encode, freqs, l, filename="test_k.csv"):
+    # write to csv file number of bits needed to encode depending on l and k
+    M = sum(freqs.values())
+    with open(filename, "w") as csv_file:
+        csv_file.write("M;l;k;bitstream_len;state_width;sum\n")
+        for k in range(1, 100):
+            (state, bitstream) = stream_ans(to_encode, freqs, k, l)
+            bitstream_len = len(bitstream) * k
+            decoded = decode_stream_ans(state, bitstream, freqs, k, l)
+            if decoded == to_encode:
+                state_width = ceil(log2(M * l * (2 ** k)))
+                csv_file.write('{};{};{};{};{};{}\n'.format(M, l, k, bitstream_len, state_width, state_width + bitstream_len))
+            else:
+                print("Encoding went wrong for k=", k, " and l=", l)
+                print(decoded)
+        csv_file.close()
+        print("File ", filename, "finished for l=", l)
+
+
+def analise_encoding_l(to_encode, freqs, k, filename="test_l.csv"):
+    # write to csv file number of bits needed to encode depending on l and k
+    M = sum(freqs.values())
+    with open(filename, "w") as csv_file:
+        csv_file.write("M;l;k;bitstream_len;state_width;sum\n")
+        for l in range(1, 100):
+            (state, bitstream) = stream_ans(to_encode, freqs, k, l)
+            bitstream_len = len(bitstream) * k
+            decoded = decode_stream_ans(state, bitstream, freqs, k, l)
+            if decoded == to_encode:
+                state_width = ceil(log2(M * l * (2 ** k)))
+                csv_file.write(
+                    '{};{};{};{};{};{}\n'.format(M, l, k, bitstream_len, state_width, state_width + bitstream_len))
+            else:
+                print("Encoding went wrong for k=", k, " and l=", l)
+                print(decoded)
+        csv_file.close()
+        print("File ", filename, "finished for k=", k)
 
 
 if __name__ == '__main__':
     print('PyCharm')
 
-    freqs = prepare_text_for_ans(text)
+    to_encode = text_lorem
+    freqs = prepare_text_for_ans(to_encode)
     cum = count_cummulative(freqs)
     print(freqs)
     print(cum)
     print(sum(freqs.values()))
+    print(len(to_encode))
     print(len(freqs))
     print(len(cum.keys()))
 
@@ -181,15 +226,33 @@ if __name__ == '__main__':
 
     print("Reversed cummulative symbol", cummulative_inverse(cum, 15))
 
-    check_encoding_decoding(text, freqs, 1, 1)
+    # check_encoding_decoding(to_encode, freqs, 1, 1)
+    #
+    # check_encoding_decoding(to_encode, freqs, 1, 4)
+    # check_encoding_decoding(to_encode, freqs, 1, 8)
+    #
+    # for i in range(2, 10):
+    #     check_encoding_decoding(to_encode, freqs, i, 1)
+    #
+    # for i in range(10, 20, 2):
+    #     check_encoding_decoding(to_encode, freqs, i, 1)
+    #
+    # for i in range(20, 40, 4):
+    #     check_encoding_decoding(to_encode, freqs, i, 1)
+    #
+    # for i in range(40, 80, 8):
+    #     check_encoding_decoding(to_encode, freqs, i, 1)
+    #
+    # for i in range(80, 160, 16):
+    #     check_encoding_decoding(to_encode, freqs, i, 1)
+    #
+    # for i in range(160, 320, 32):
+    #     check_encoding_decoding(to_encode, freqs, i, 1)
 
-    check_encoding_decoding(text, freqs, 1, 4)
-    check_encoding_decoding(text, freqs, 1, 8)
-
-    check_encoding_decoding(text, freqs, 2, 1)
-    check_encoding_decoding(text, freqs, 4, 1)
-    check_encoding_decoding(text, freqs, 8, 1)
-    check_encoding_decoding(text, freqs, 10, 1)
+    # check_encoding_decoding(to_encode, freqs, 2, 1)
+    # check_encoding_decoding(to_encode, freqs, 4, 1)
+    # check_encoding_decoding(to_encode, freqs, 8, 1)
+    # check_encoding_decoding(to_encode, freqs, 10, 1)
     # print("k=1, l=10")
     # (state, bitstream) = stream_ans(text, freqs, 1, 10)
     # print(state, bitstream)
@@ -198,11 +261,37 @@ if __name__ == '__main__':
     # print("decoding", decoded_text)
     # print("decoding successfull: ", decoded_text == text)
 
+    print("-----Analise for k-----")
+    analise_encoding_k(to_encode, freqs, 1, "test_k_l_1.csv")
+    analise_encoding_k(to_encode, freqs, 2, "test_k_l_2.csv")
+    analise_encoding_k(to_encode, freqs, 3, "test_k_l_3.csv")
+    analise_encoding_k(to_encode, freqs, 4, "test_k_l_4.csv")
+    analise_encoding_k(to_encode, freqs, 5, "test_k_l_5.csv")
+    analise_encoding_k(to_encode, freqs, 6, "test_k_l_6.csv")
+    analise_encoding_k(to_encode, freqs, 7, "test_k_l_7.csv")
+    analise_encoding_k(to_encode, freqs, 8, "test_k_l_8.csv")
+    analise_encoding_k(to_encode, freqs, 9, "test_k_l_9.csv")
+    analise_encoding_k(to_encode, freqs, 10, "test_k_l_10.csv")
+
+    print("-----Analise for l-----")
+
+    analise_encoding_l(to_encode, freqs, 1, "test_l_k_1.csv")
+    analise_encoding_l(to_encode, freqs, 2, "test_l_k_2.csv")
+    analise_encoding_l(to_encode, freqs, 3, "test_l_k_3.csv")
+    analise_encoding_l(to_encode, freqs, 4, "test_l_k_4.csv")
+    analise_encoding_l(to_encode, freqs, 5, "test_l_k_5.csv")
+    analise_encoding_l(to_encode, freqs, 6, "test_l_k_6.csv")
+    analise_encoding_l(to_encode, freqs, 7, "test_l_k_7.csv")
+    analise_encoding_l(to_encode, freqs, 8, "test_l_k_8.csv")
+    analise_encoding_l(to_encode, freqs, 9, "test_l_k_9.csv")
+    analise_encoding_l(to_encode, freqs, 10, "test_l_k_10.csv")
+    analise_encoding_l(to_encode, freqs, 15, "test_l_k_15.csv")
+
     print("------No division------")
-    (state, bitstream) = stream_ans_no_div(text, freqs)
+    (state, bitstream) = stream_ans_no_div(to_encode, freqs)
     print(state, bitstream)
     print(len(bitstream))
 
     decoded_text = decode_stream_ans_no_div(state, bitstream, freqs)
     print("decoding", decoded_text)
-    print("decoding successfull: ", decoded_text == text)
+    print("decoding successfull: ", decoded_text == to_encode)
