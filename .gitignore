@@ -4,4 +4,13 @@
 *.runs/
 *.idea/
 *.csv
+*.jpg
+*.png
+ip_repo/
+*bsp/
+*wrapper_hw*
+.metadata/
+*design_acc*
+webtalk/
+*ip_user_files/
 
