@@ -11,8 +11,9 @@ fixed_freqs_512 = {' ': 85, 'e': 44, 't': 32, 'a': 31, 'n': 28, 'i': 28, 'o': 27
                     'm': 9, 'p': 8, 'f': 7, 'g': 6, '.': 5, 'b': 5, ',': 4, 'v': 3, 'x': 1, 'q': 1, 'L': 1, 'U': 1, 'D': 1, 'E': 1,
                    'O': 1, 'w': 1, 'k': 1, 'z': 1, 'y': 1, 'T': 1, 'I': 1}
 
-# image_peppers =
-
+image_peppers = open("test_images/peppers.jpg", "br")
+peppers = image_peppers.read()
+image_peppers.close()
 
 def prepare_text_for_ans(input_text: str):
     counter = Counter(input_text)
@@ -94,11 +95,12 @@ def decode_stream_ans(state, bitstream: list, freqs, k: int, l: int):
     shift_factor = (2**k)
     range_factor = l
 
-    dec_text = ""
+    # dec_text = ""
+    dec_text = bytes()
     while len(dec_text) < M:
         symbol, state = drans_step(state, freqs)
 
-        dec_text = symbol + dec_text
+        dec_text = symbol.to_bytes(1, "big") + dec_text
         while state < range_factor * M and len(bitstream) > 0:
             bits = bitstream.pop()
             state = state * shift_factor + bits
@@ -161,7 +163,7 @@ def check_encoding_decoding(text, freqs, l, k):
     print("------------")
     print("l=", l, "k=", k)
     (state, bitstream) = stream_ans(text, freqs, k, l)
-    print("state, bitstream:", state, bitstream)
+    # print("state, bitstream:", state, bitstream)
     print("bitstream length: ", len(bitstream))
     decoded_text = decode_stream_ans(state, bitstream, freqs, k, l)
     # print("decoded text: ", decoded_text)
@@ -171,9 +173,9 @@ def check_encoding_decoding(text, freqs, l, k):
 def analise_encoding_k(to_encode, freqs, l, filename="test_k.csv"):
     # write to csv file number of bits needed to encode depending on l and k
     M = sum(freqs.values())
-    with open(filename, "w") as csv_file:
+    with open("peppers_analise/" + filename, "w") as csv_file:
         csv_file.write("M;l;k;bitstream_len;state_width;sum\n")
-        for k in range(1, 100):
+        for k in range(1, 101):
             (state, bitstream) = stream_ans(to_encode, freqs, k, l)
             bitstream_len = len(bitstream) * k
             decoded = decode_stream_ans(state, bitstream, freqs, k, l)
@@ -190,9 +192,9 @@ def analise_encoding_k(to_encode, freqs, l, filename="test_k.csv"):
 def analise_encoding_l(to_encode, freqs, k, filename="test_l.csv"):
     # write to csv file number of bits needed to encode depending on l and k
     M = sum(freqs.values())
-    with open(filename, "w") as csv_file:
+    with open("peppers_analise/" + filename, "w") as csv_file:
         csv_file.write("M;l;k;bitstream_len;state_width;sum\n")
-        for l in range(1, 100):
+        for l in range(1, 101):
             (state, bitstream) = stream_ans(to_encode, freqs, k, l)
             bitstream_len = len(bitstream) * k
             decoded = decode_stream_ans(state, bitstream, freqs, k, l)
@@ -210,7 +212,7 @@ def analise_encoding_l(to_encode, freqs, k, filename="test_l.csv"):
 if __name__ == '__main__':
     print('PyCharm')
 
-    to_encode = text_lorem
+    to_encode = peppers
     freqs = prepare_text_for_ans(to_encode)
     cum = count_cummulative(freqs)
     print(freqs)
@@ -219,12 +221,6 @@ if __name__ == '__main__':
     print(len(to_encode))
     print(len(freqs))
     print(len(cum.keys()))
-
-    first_step = rans_step('L', 445, freqs)
-    print(first_step)
-    print(drans_step(first_step, freqs))
-
-    print("Reversed cummulative symbol", cummulative_inverse(cum, 15))
 
     # check_encoding_decoding(to_encode, freqs, 1, 1)
     #
@@ -262,36 +258,40 @@ if __name__ == '__main__':
     # print("decoding successfull: ", decoded_text == text)
 
     print("-----Analise for k-----")
-    analise_encoding_k(to_encode, freqs, 1, "test_k_l_1.csv")
-    analise_encoding_k(to_encode, freqs, 2, "test_k_l_2.csv")
-    analise_encoding_k(to_encode, freqs, 3, "test_k_l_3.csv")
-    analise_encoding_k(to_encode, freqs, 4, "test_k_l_4.csv")
-    analise_encoding_k(to_encode, freqs, 5, "test_k_l_5.csv")
-    analise_encoding_k(to_encode, freqs, 6, "test_k_l_6.csv")
-    analise_encoding_k(to_encode, freqs, 7, "test_k_l_7.csv")
-    analise_encoding_k(to_encode, freqs, 8, "test_k_l_8.csv")
-    analise_encoding_k(to_encode, freqs, 9, "test_k_l_9.csv")
-    analise_encoding_k(to_encode, freqs, 10, "test_k_l_10.csv")
+    # analise_encoding_k(to_encode, freqs, 1, "test_k_l_1.csv")
+    # analise_encoding_k(to_encode, freqs, 2, "test_k_l_2.csv")
+    # analise_encoding_k(to_encode, freqs, 3, "test_k_l_3.csv")
+    # analise_encoding_k(to_encode, freqs, 4, "test_k_l_4.csv")
+    # analise_encoding_k(to_encode, freqs, 5, "test_k_l_5.csv")
+    # analise_encoding_k(to_encode, freqs, 6, "test_k_l_6.csv")
+    # analise_encoding_k(to_encode, freqs, 7, "test_k_l_7.csv")
+    # analise_encoding_k(to_encode, freqs, 8, "test_k_l_8.csv")
+    # analise_encoding_k(to_encode, freqs, 9, "test_k_l_9.csv")
+    # analise_encoding_k(to_encode, freqs, 10, "test_k_l_10.csv")
 
     print("-----Analise for l-----")
 
-    analise_encoding_l(to_encode, freqs, 1, "test_l_k_1.csv")
-    analise_encoding_l(to_encode, freqs, 2, "test_l_k_2.csv")
-    analise_encoding_l(to_encode, freqs, 3, "test_l_k_3.csv")
-    analise_encoding_l(to_encode, freqs, 4, "test_l_k_4.csv")
+    # analise_encoding_l(to_encode, freqs, 1, "test_l_k_1.csv")
+    # analise_encoding_l(to_encode, freqs, 2, "test_l_k_2.csv")
+    # analise_encoding_l(to_encode, freqs, 3, "test_l_k_3.csv")
+    # analise_encoding_l(to_encode, freqs, 4, "test_l_k_4.csv")
     analise_encoding_l(to_encode, freqs, 5, "test_l_k_5.csv")
     analise_encoding_l(to_encode, freqs, 6, "test_l_k_6.csv")
     analise_encoding_l(to_encode, freqs, 7, "test_l_k_7.csv")
     analise_encoding_l(to_encode, freqs, 8, "test_l_k_8.csv")
-    analise_encoding_l(to_encode, freqs, 9, "test_l_k_9.csv")
+    # analise_encoding_l(to_encode, freqs, 9, "test_l_k_9.csv")
     analise_encoding_l(to_encode, freqs, 10, "test_l_k_10.csv")
-    analise_encoding_l(to_encode, freqs, 15, "test_l_k_15.csv")
+    # analise_encoding_l(to_encode, freqs, 15, "test_l_k_15.csv")
+    analise_encoding_l(to_encode, freqs, 16, "test_l_k_16.csv")
+    analise_encoding_l(to_encode, freqs, 32, "test_l_k_32.csv")
+    analise_encoding_l(to_encode, freqs, 64, "test_l_k_64.csv")
+    analise_encoding_l(to_encode, freqs, 128, "test_l_k_128.csv")
 
-    print("------No division------")
-    (state, bitstream) = stream_ans_no_div(to_encode, freqs)
-    print(state, bitstream)
-    print(len(bitstream))
-
-    decoded_text = decode_stream_ans_no_div(state, bitstream, freqs)
-    print("decoding", decoded_text)
-    print("decoding successfull: ", decoded_text == to_encode)
+    # print("------No division------")
+    # (state, bitstream) = stream_ans_no_div(to_encode, freqs)
+    # print(state, bitstream)
+    # print(len(bitstream))
+    #
+    # decoded_text = decode_stream_ans_no_div(state, bitstream, freqs)
+    # print("decoding", decoded_text)
+    # print("decoding successfull: ", decoded_text == to_encode)
