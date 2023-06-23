@@ -46,7 +46,7 @@ module streaming_ans_no_div_synth
     integer i;
     
     always @(posedge clk) begin
-        if (!reset) begin
+        if (reset) begin
             output_ready <= 0;
             output_state <= 0;
             bitstream_width <= 0;

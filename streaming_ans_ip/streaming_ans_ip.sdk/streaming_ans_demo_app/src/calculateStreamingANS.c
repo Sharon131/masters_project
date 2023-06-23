@@ -42,6 +42,7 @@
 
 int calculateStreamingANS(u32* symbols, u32* ans_state,  u32* bitstream, u32* bitstream_widths)
 {
+	print("In calculate streaming ANS\r\n");
 //	u32 data  =  1 + (4 << 1);
 	u32 result;
 
@@ -49,12 +50,12 @@ int calculateStreamingANS(u32* symbols, u32* ans_state,  u32* bitstream, u32* bi
 	//	result = CORDIC_IP_mReadReg(CORDIC_BASE_ADDR, RESULT_REG_OFFSET);
 
 	//Send data to data register of cordic processor
-	STREAMING_ANS_IP_mWriteReg(STREAMING_ANS_BASE_ADDR, CONTROL_REG_OFFSET, 1 + (4 << 1));
+	STREAMING_ANS_IP_mWriteReg(STREAMING_ANS_BASE_ADDR, CONTROL_REG_OFFSET, 1 | (4 << 1));
 	//Start cordic processor - pulse start bit in control register
-	STREAMING_ANS_IP_mWriteReg(STREAMING_ANS_BASE_ADDR, CONTROL_REG_OFFSET, 1 + (5 << 1));
-	STREAMING_ANS_IP_mWriteReg(STREAMING_ANS_BASE_ADDR, CONTROL_REG_OFFSET, 1 + (3 << 1));
-	STREAMING_ANS_IP_mWriteReg(STREAMING_ANS_BASE_ADDR, CONTROL_REG_OFFSET, 1 + (2 << 1));
-	STREAMING_ANS_IP_mWriteReg(STREAMING_ANS_BASE_ADDR, CONTROL_REG_OFFSET, 1 + (2 << 1));
+	STREAMING_ANS_IP_mWriteReg(STREAMING_ANS_BASE_ADDR, CONTROL_REG_OFFSET, 1 | (5 << 1));
+	STREAMING_ANS_IP_mWriteReg(STREAMING_ANS_BASE_ADDR, CONTROL_REG_OFFSET, 1 | (3 << 1));
+	STREAMING_ANS_IP_mWriteReg(STREAMING_ANS_BASE_ADDR, CONTROL_REG_OFFSET, 1 | (2 << 1));
+	STREAMING_ANS_IP_mWriteReg(STREAMING_ANS_BASE_ADDR, CONTROL_REG_OFFSET, 1 | (2 << 1));
 
 	STREAMING_ANS_IP_mWriteReg(STREAMING_ANS_BASE_ADDR, SYMBOL_REG_OFFSET, 0);
 	STREAMING_ANS_IP_mWriteReg(STREAMING_ANS_BASE_ADDR, SYMBOL_REG_OFFSET, 0);
@@ -68,8 +69,11 @@ int calculateStreamingANS(u32* symbols, u32* ans_state,  u32* bitstream, u32* bi
 	STREAMING_ANS_IP_mWriteReg(STREAMING_ANS_BASE_ADDR, SYMBOL_REG_OFFSET, 1);
 	STREAMING_ANS_IP_mWriteReg(STREAMING_ANS_BASE_ADDR, SYMBOL_REG_OFFSET, 0);
 	STREAMING_ANS_IP_mWriteReg(STREAMING_ANS_BASE_ADDR, SYMBOL_REG_OFFSET, 1);
+
+	print("Before wait\r\n");
 	//Wait for ready bit in status register
 	while( (STREAMING_ANS_IP_mReadReg(STREAMING_ANS_BASE_ADDR, STATUS_REG_OFFSET) & STATUS_REG_READY_MASK) == 0);
+	print("After wait\r\n");
 	//Get results
 	result = STREAMING_ANS_IP_mReadReg(STREAMING_ANS_BASE_ADDR, RESULT_REG_OFFSET);
 	//Extract sin and cos from 32-bit register data

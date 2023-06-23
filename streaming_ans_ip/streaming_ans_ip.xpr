@@ -41,13 +41,13 @@
     <Option Name="WTVcsLaunchSim" Val="0"/>
     <Option Name="WTRivieraLaunchSim" Val="0"/>
     <Option Name="WTActivehdlLaunchSim" Val="0"/>
-    <Option Name="WTXSimExportSim" Val="1"/>
-    <Option Name="WTModelSimExportSim" Val="1"/>
-    <Option Name="WTQuestaExportSim" Val="1"/>
-    <Option Name="WTIesExportSim" Val="1"/>
-    <Option Name="WTVcsExportSim" Val="1"/>
-    <Option Name="WTRivieraExportSim" Val="1"/>
-    <Option Name="WTActivehdlExportSim" Val="1"/>
+    <Option Name="WTXSimExportSim" Val="2"/>
+    <Option Name="WTModelSimExportSim" Val="2"/>
+    <Option Name="WTQuestaExportSim" Val="2"/>
+    <Option Name="WTIesExportSim" Val="2"/>
+    <Option Name="WTVcsExportSim" Val="2"/>
+    <Option Name="WTRivieraExportSim" Val="2"/>
+    <Option Name="WTActivehdlExportSim" Val="2"/>
     <Option Name="GenerateIPUpgradeLog" Val="TRUE"/>
     <Option Name="XSimRadix" Val="hex"/>
     <Option Name="XSimTimeUnit" Val="ns"/>
@@ -68,11 +68,11 @@
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
-        <CompFileExtendedInfo CompFileName="design_acc.bd" FileRelPathName="ip/design_acc_streaming_ans_ip_0_0/design_acc_streaming_ans_ip_0_0.xci">
-          <Proxy FileSetName="design_acc_streaming_ans_ip_0_0"/>
-        </CompFileExtendedInfo>
         <CompFileExtendedInfo CompFileName="design_acc.bd" FileRelPathName="ip/design_acc_rst_ps7_0_100M_0/design_acc_rst_ps7_0_100M_0.xci">
           <Proxy FileSetName="design_acc_rst_ps7_0_100M_0"/>
+        </CompFileExtendedInfo>
+        <CompFileExtendedInfo CompFileName="design_acc.bd" FileRelPathName="ip/design_acc_streaming_ans_ip_0_0/design_acc_streaming_ans_ip_0_0.xci">
+          <Proxy FileSetName="design_acc_streaming_ans_ip_0_0"/>
         </CompFileExtendedInfo>
         <CompFileExtendedInfo CompFileName="design_acc.bd" FileRelPathName="ip/design_acc_processing_system7_0_0/design_acc_processing_system7_0_0.xci">
           <Proxy FileSetName="design_acc_processing_system7_0_0"/>

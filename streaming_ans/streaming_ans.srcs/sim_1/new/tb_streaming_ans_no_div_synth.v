@@ -42,12 +42,12 @@ module tb_streaming_ans_no_div_synth;
     initial
         begin
             clk = 0;
-            reset = 0;
+            reset = 1;
             start = 0;
             freq = 0;
             symbol = 0;
             
-            #10; reset = 1;
+            #10; reset = 0;
             #100; freq = 3; start = 1;
             
             /* Testing string: aabc ddaa cbab */

@@ -23,7 +23,7 @@
 /**
  *
  */
-int calculateCordicVal(u32 angle, u32* sin,  u32* cos);
+int calculateStreamingANS(u32* symbols, u32* ans_state,  u32* bitstream, u32* bitstream_widths);
 
 
 /**
@@ -66,8 +66,8 @@ int main()
 
     init_platform();
 
-    while(1){
-    	print("Enter angle (in degrees, two digits 00 to 90)");
+//    while(1){
+    	print("Enter angle (in degrees, two digits 00 to 90)\r\n");
 //    	angle = read2DigitDecVal();
     	print("\n\r");
     	//Convert to radians fxp(12:10)
@@ -79,6 +79,6 @@ int main()
     	calculateStreamingANS(NULL, &ans_state, NULL, NULL);
 
     	xil_printf("State value is: %d\r\n", ans_state);
-    }
+//    }
 
 }
