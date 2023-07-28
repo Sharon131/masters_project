@@ -7,9 +7,20 @@ import time
 # peppers_bmp = image_peppers_bmp.read()
 # image_peppers_bmp.close()
 
-generated_text_file = open("generated_16.txt", "r")
+generated_text_file = open("generated_32.txt", "r")
 generated_text = generated_text_file.read()
 generated_text_file.close()
+
+
+def prepare_large_text_for_ans(filename, size, size_of_chunk=2**16):
+    generated_text_file = open(filename, "r")
+    counter = Counter()
+    for i in range(size // size_of_chunk):
+        input_text = generated_text_file.read(size_of_chunk)
+        counter.update(input_text)
+    generated_text_file.close()
+
+    return counter
 
 
 def prepare_text_for_ans(input_text: str):
@@ -164,51 +175,47 @@ def check_encoding_decoding(text, freqs, l, k):
     print("decoding time for l=", l, "k=", k, ":", end - start)
 
 
-def analise_encoding_k(to_encode, freqs, l, filename="", path=""):
+def analise_encoding_k(to_encode, freqs, filename="", path=""):
     # write to csv file number of bits needed to encode depending on l and k
     if filename == "":
-        filename = "test_k_l_" + str(l) + ".csv"
+        filename = "test_k.csv"
     M = sum(freqs.values())
     with open(path + "/" + filename, "w") as csv_file:
-        csv_file.write("M;l;k;bitstream_len;sum\n")
-        k = 1
-        for i in range(0, 8):
-            (state, bitstream) = stream_ans(to_encode, freqs, k, l)
-            bitstream_len = len(bitstream) * k
-            # decoded = decode_stream_ans(state, bitstream, freqs, k, l)
-            # if decoded == to_encode:
-            state_width = ceil(log2(M * l * (2 ** k)))
-            csv_file.write('{};{};{};{};{}\n'.format(M, l, k, bitstream_len, state_width + bitstream_len))
-            # else:
-            #     print("Encoding went wrong for k=", k, " and l=", l)
-            #     print(decoded)
-            k *= 2
-        csv_file.close()
-        print("File ", filename, "finished for l=", l)
-
-
-def analise_encoding_l(to_encode, freqs, k, filename="", path=""):
-    # write to csv file number of bits needed to encode depending on l and k
-    if filename == "":
-        filename = "test_l_k_" + str(k) + ".csv"
-    M = sum(freqs.values())
-    with open(path + "/" + filename, "w") as csv_file:
-        csv_file.write("M;l;k;bitstream_len;sum\n")
+        csv_file.write("M;l;k;sum\n")
         l = 1
-        for i in range(0, 8):
-            (state, bitstream) = stream_ans(to_encode, freqs, k, l)
-            bitstream_len = len(bitstream) * k
-            # decoded = decode_stream_ans(state, bitstream, freqs, k, l)
-            # if decoded == to_encode:
-            state_width = ceil(log2(M * l * (2 ** k)))
-            csv_file.write(
-                '{};{};{};{};{}\n'.format(M, l, k, bitstream_len, state_width + bitstream_len))
-            # else:
-            #     print("Encoding went wrong for k=", k, " and l=", l)
-            #     print(decoded)
+        for j in range(0, 8):
+            k = 1
+            for i in range(0, 8):
+                (state, bitstream) = stream_ans(to_encode, freqs, k, l)
+                bitstream_len = len(bitstream) * k
+                state_width = ceil(log2(M * l * (2 ** k)))
+                csv_file.write('{};{};{};{}\n'.format(M, l, k, state_width + bitstream_len))
+                k *= 2
             l *= 2
+            print("File ", filename, "finished for l=", l)
         csv_file.close()
-        print("File ", filename, "finished for k=", k)
+
+
+def analise_encoding_l(to_encode, freqs, filename="", path=""):
+    # write to csv file number of bits needed to encode depending on l and k
+    if filename == "":
+        filename = "test_l.csv"
+    M = sum(freqs.values())
+    with open(path + "/" + filename, "w") as csv_file:
+        csv_file.write("M;l;k;sum\n")
+        k = 1
+        for j in range(0, 8):
+            l = 1
+            for i in range(0, 8):
+                (state, bitstream) = stream_ans(to_encode, freqs, k, l)
+                bitstream_len = len(bitstream) * k
+                state_width = ceil(log2(M * l * (2 ** k)))
+                csv_file.write(
+                    '{};{};{};{}\n'.format(M, l, k, state_width + bitstream_len))
+                l *= 2
+            k *= 2
+            print("File ", filename, "finished for k=", k)
+        csv_file.close()
 
 
 def write_distribution(freqs, filename="distribution_new.csv"):
@@ -236,6 +243,7 @@ if __name__ == '__main__':
     to_encode = generated_text
     print(len(generated_text))
     freqs = prepare_text_for_ans(to_encode)
+    # freqs = prepare_large_text_for_ans("generated_32.txt", 2**32)
 
     entropy_per_symbol = calculate_entropy(freqs)
     print("entropy: ", entropy_per_symbol)
@@ -244,23 +252,29 @@ if __name__ == '__main__':
 
     path_to_results = "generated_results"
     print("-----Analise for k-----")
-    analise_encoding_k(to_encode, freqs, 1, path=path_to_results)
-    analise_encoding_k(to_encode, freqs, 2, path=path_to_results)
-    analise_encoding_k(to_encode, freqs, 4, path=path_to_results)
-    analise_encoding_k(to_encode, freqs, 8, path=path_to_results)
-    # analise_encoding_k(to_encode, freqs, 9, "test_k_l_9.csv")
-    # analise_encoding_k(to_encode, freqs, 10, "test_k_l_10.csv")
+    # analise_encoding_k(to_encode, freqs, path=path_to_results)
+
+    # analise_encoding_k(to_encode, freqs, 1, path=path_to_results)
+    # analise_encoding_k(to_encode, freqs, 2, path=path_to_results)
+    # analise_encoding_k(to_encode, freqs, 4, path=path_to_results)
+    # analise_encoding_k(to_encode, freqs, 8, path=path_to_results)
+    # analise_encoding_k(to_encode, freqs, 16, path=path_to_results)
+    # analise_encoding_k(to_encode, freqs, 32, path=path_to_results)
+    # analise_encoding_k(to_encode, freqs, 64, path=path_to_results)
+    # analise_encoding_k(to_encode, freqs, 128, path=path_to_results)
 
     print("-----Analise for l-----")
 
-    analise_encoding_l(to_encode, freqs, 1, path=path_to_results)
-    analise_encoding_l(to_encode, freqs, 2, path=path_to_results)
-    analise_encoding_l(to_encode, freqs, 4, path=path_to_results)
-    analise_encoding_l(to_encode, freqs, 8, path=path_to_results)
-    analise_encoding_l(to_encode, freqs, 16, path=path_to_results)
-    analise_encoding_l(to_encode, freqs, 32, path=path_to_results)
-    analise_encoding_l(to_encode, freqs, 64, path=path_to_results)
-    analise_encoding_l(to_encode, freqs, 128, path=path_to_results)
+    analise_encoding_l(to_encode, freqs, path=path_to_results)
+
+    # analise_encoding_l(to_encode, freqs, 1, path=path_to_results)
+    # analise_encoding_l(to_encode, freqs, 2, path=path_to_results)
+    # analise_encoding_l(to_encode, freqs, 4, path=path_to_results)
+    # analise_encoding_l(to_encode, freqs, 8, path=path_to_results)
+    # analise_encoding_l(to_encode, freqs, 16, path=path_to_results)
+    # analise_encoding_l(to_encode, freqs, 32, path=path_to_results)
+    # analise_encoding_l(to_encode, freqs, 64, path=path_to_results)
+    # analise_encoding_l(to_encode, freqs, 128, path=path_to_results)
 
     # print("------No division------")
     # (state, bitstream) = stream_ans_no_div(to_encode, freqs)
