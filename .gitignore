@@ -13,4 +13,7 @@ ip_repo/
 *design_acc*
 webtalk/
 *ip_user_files/
-
+*.txt
+calgarycorpus/
+*.bmp
+test_images/
