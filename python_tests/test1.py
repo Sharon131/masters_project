@@ -7,9 +7,10 @@ import time
 # peppers_bmp = image_peppers_bmp.read()
 # image_peppers_bmp.close()
 
-generated_text_file = open("generated_32.txt", "r")
-generated_text = generated_text_file.read()
-generated_text_file.close()
+size_of_text = 32
+# generated_text_file = open("generated_" + str(size_of_text) + ".txt", "r")
+# generated_text = generated_text_file.read()
+# generated_text_file.close()
 
 
 def prepare_large_text_for_ans(filename, size, size_of_chunk=2**16):
@@ -51,13 +52,14 @@ def rans_step(symbol, state: int, freqs: Counter):
     return (state // freqs[symbol]) * M + C[symbol] + state % freqs[symbol]
 
 
-def stream_ans(s_input: str, freqs: Counter, k: int, l: int):
+def stream_ans(s_input: str, freqs: Counter, k: int, l: int, state=0):
     M = sum(freqs.values())
     # M = 1024
     bitstream = []
     shift_factor = (2**k)
     range_factor = l * shift_factor
-    state = M * l
+    if state == 0:
+        state = M * l
 
     for s in s_input:  # iterate over the input
         # Output bits to the stream to bring the state in the range for the next encoding
@@ -178,7 +180,7 @@ def check_encoding_decoding(text, freqs, l, k):
 def analise_encoding_k(to_encode, freqs, filename="", path=""):
     # write to csv file number of bits needed to encode depending on l and k
     if filename == "":
-        filename = "test_k.csv"
+        filename = "test_k_" + str(size_of_text) + ".csv"
     M = sum(freqs.values())
     with open(path + "/" + filename, "w") as csv_file:
         csv_file.write("M;l;k;sum\n")
@@ -199,7 +201,7 @@ def analise_encoding_k(to_encode, freqs, filename="", path=""):
 def analise_encoding_l(to_encode, freqs, filename="", path=""):
     # write to csv file number of bits needed to encode depending on l and k
     if filename == "":
-        filename = "test_l.csv"
+        filename = "test_l_" + str(size_of_text) + ".csv"
     M = sum(freqs.values())
     with open(path + "/" + filename, "w") as csv_file:
         csv_file.write("M;l;k;sum\n")
@@ -217,6 +219,35 @@ def analise_encoding_l(to_encode, freqs, filename="", path=""):
             print("File ", filename, "finished for k=", k)
         csv_file.close()
 
+
+def analise_encoding_large_file_l(filename_to_encode, freqs, size=2**32, size_of_chunk=2**16, filename="", path=""):
+    # write to csv file number of bits needed to encode depending on l and k
+    if filename == "":
+        filename = "test_l_" + str(size_of_text) + ".csv"
+    M = sum(freqs.values())
+    with open(path + "/" + filename, "w") as csv_file:
+        csv_file.write("M;l;k;sum\n")
+        k = 1
+        for j in range(0, 8):
+            l = 1
+            for i in range(0, 8):
+                state = M * l
+                bitstream = []
+                with open(filename_to_encode, "r") as file_to_encode:
+                    for i in range(size // size_of_chunk):
+                        to_encode = file_to_encode.read(size_of_chunk)
+                        (state, bitstream_new) = stream_ans(to_encode, freqs, k, l, state=state)
+                        bitstream.extend(bitstream_new)
+                        print("Chunk: ", i, size // size_of_chunk)
+                    file_to_encode.close()
+                bitstream_len = len(bitstream) * k
+                state_width = ceil(log2(M * l * (2 ** k)))
+                csv_file.write(
+                    '{};{};{};{}\n'.format(M, l, k, state_width + bitstream_len))
+                l *= 2
+            k *= 2
+            print("k=", k)
+        csv_file.close()
 
 def write_distribution(freqs, filename="distribution_new.csv"):
     with open(filename, "w") as write_file:
@@ -240,10 +271,10 @@ def calculate_entropy(freqs: Counter):
 if __name__ == '__main__':
     print('PyCharm')
 
-    to_encode = generated_text
-    print(len(generated_text))
-    freqs = prepare_text_for_ans(to_encode)
-    # freqs = prepare_large_text_for_ans("generated_32.txt", 2**32)
+    # to_encode = generated_text
+    # print(len(generated_text))
+    # freqs = prepare_text_for_ans(to_encode)
+    freqs = prepare_large_text_for_ans("generated_32.txt", 2**32)
 
     entropy_per_symbol = calculate_entropy(freqs)
     print("entropy: ", entropy_per_symbol)
@@ -265,8 +296,9 @@ if __name__ == '__main__':
 
     print("-----Analise for l-----")
 
-    analise_encoding_l(to_encode, freqs, path=path_to_results)
+    # analise_encoding_l(to_encode, freqs, path=path_to_results)
 
+    analise_encoding_large_file_l("generated_32.txt", freqs, path=path_to_results)
     # analise_encoding_l(to_encode, freqs, 1, path=path_to_results)
     # analise_encoding_l(to_encode, freqs, 2, path=path_to_results)
     # analise_encoding_l(to_encode, freqs, 4, path=path_to_results)
