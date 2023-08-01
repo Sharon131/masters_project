@@ -44,17 +44,18 @@ def count_cummulative(freqs: Counter):
     return cum
 
 
-def rans_step(symbol, state: int, freqs: Counter):
-    M = sum(freqs.values())
-    # M = 1024
-    C = count_cummulative(freqs)
+def rans_step(symbol, state: int, freqs: Counter, M=0, C=[]):
+    if M == 0:
+        M = sum(freqs.values())
+    if C == []:
+        C = count_cummulative(freqs)
 
     return (state // freqs[symbol]) * M + C[symbol] + state % freqs[symbol]
 
 
 def stream_ans(s_input: str, freqs: Counter, k: int, l: int, state=0):
-    M = sum(freqs.values())
-    # M = 1024
+    if M == 0:
+        M = sum(freqs.values())
     bitstream = []
     shift_factor = (2**k)
     range_factor = l * shift_factor
@@ -220,34 +221,58 @@ def analise_encoding_l(to_encode, freqs, filename="", path=""):
         csv_file.close()
 
 
+def stream_ans_large_data(s_input: str, freqs: Counter, k: int, l: int, state=0, M=0, C=[]):
+    if M == 0:
+        M = sum(freqs.values())
+    shift_factor = (2**k)
+    range_factor = l * shift_factor
+    if state == 0:
+        state = M * l
+
+    bitstream_len = 0
+    for s in s_input:  # iterate over the input
+        # Output bits to the stream to bring the state in the range for the next encoding
+        while state >= range_factor * freqs[s]:
+            bitstream_len += k
+            state = state // shift_factor
+        state = rans_step(s, state, freqs, M=M, C=C)  # The rANS encoding step
+    return state, bitstream_len
+
+
 def analise_encoding_large_file_l(filename_to_encode, freqs, size=2**32, size_of_chunk=2**16, filename="", path=""):
     # write to csv file number of bits needed to encode depending on l and k
     if filename == "":
         filename = "test_l_" + str(size_of_text) + ".csv"
     M = sum(freqs.values())
+    C = count_cummulative(freqs)
+    k_l_values = [1, 2, 4, 8, 16, 32, 64, 128]
     with open(path + "/" + filename, "w") as csv_file:
         csv_file.write("M;l;k;sum\n")
-        k = 1
-        for j in range(0, 8):
-            l = 1
-            for i in range(0, 8):
+        # k = 1
+        # for j in range(0, 8):
+        for k in k_l_values:
+            # l = 1
+            # for i in range(0, 8):
+            for l in k_l_values:
                 state = M * l
-                bitstream = []
+                bitstream_len = 0
                 with open(filename_to_encode, "r") as file_to_encode:
-                    for i in range(size // size_of_chunk):
+                    # Should be size // size_of_chunk, but it is replaced by size_of_chunk anyway, to make it faster
+                    for i in range(size_of_chunk):
                         to_encode = file_to_encode.read(size_of_chunk)
-                        (state, bitstream_new) = stream_ans(to_encode, freqs, k, l, state=state)
-                        bitstream.extend(bitstream_new)
-                        print("Chunk: ", i, size // size_of_chunk)
+                        (state, bitstream_len_new) = stream_ans_large_data(to_encode, freqs, k, l, state=state, M=M, C=C)
+                        bitstream_len += bitstream_len_new
+                        print("Chunk: ", i)
                     file_to_encode.close()
-                bitstream_len = len(bitstream) * k
+                bitstream_len *= k
                 state_width = ceil(log2(M * l * (2 ** k)))
                 csv_file.write(
                     '{};{};{};{}\n'.format(M, l, k, state_width + bitstream_len))
-                l *= 2
-            k *= 2
+                # l *= 2
+            # k *= 2
             print("k=", k)
         csv_file.close()
+
 
 def write_distribution(freqs, filename="distribution_new.csv"):
     with open(filename, "w") as write_file:
@@ -276,6 +301,7 @@ if __name__ == '__main__':
     # freqs = prepare_text_for_ans(to_encode)
     freqs = prepare_large_text_for_ans("generated_32.txt", 2**32)
 
+    print("Size: ", sum(freqs.values()))
     entropy_per_symbol = calculate_entropy(freqs)
     print("entropy: ", entropy_per_symbol)
     print("entropy all: ", entropy_per_symbol * sum(freqs.values()))
